@@ -1,0 +1,10 @@
+{
+  "id": "eclogite.downcast",
+  "name": "The Downcast",
+  "version": "1.0.0",
+  "authors": "Eclogite",
+  "description": "Adds The Downcast",
+  "requirements": [ "slime-cubed.slugbase" ],
+	"requirements_names": [ "SlugBase" ],
+  "checksum_override_version": true
+}

@@ -1,0 +1,13 @@
+{
+    "id": "Downcast",
+    "name": "The Downcast",
+    "description": "Just a downcast guy.<LINE>He can fly!<LINE>(sort of)",
+    "features": {
+        "color": "dea8ff",
+	"start_room": "UW_A12",
+        "downcast/can_glide": true,
+        "downcast/turning_coefficient": 0.1,
+        "downcast/drag_coefficient": 0.75,
+        "downcast/lift_coefficient": 0.1
+    }
+}
