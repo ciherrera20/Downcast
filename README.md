@@ -1,6 +1,8 @@
 Rain World mod
 
 TODO:
+- Bugs:
+    - Can wall jump while gliding off of a corner, leading to some wacky looking movement
 - Add flapping behaviors
     - When gliding, pressing jump allows slugcat to flap their arms and gain some height, at the cost of reducing horizontal momentum
 - Think about how grapple worms should interact with gliding/flapping
