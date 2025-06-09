@@ -22,7 +22,6 @@ public partial class Downcast : BaseUnityPlugin
     public const string PLUGIN_GUID = "eclogite.downcast";
     public const string PLUGIN_NAME = "The Downcast";
     public const string PLUGIN_VERSION = "1.0.0";
-    private static readonly DowncastOptions Options = DowncastOptions.instance;
 
     // Create slugbase player features
     public static readonly PlayerFeature<bool> CanGlideFeature = PlayerBool("downcast/can_glide");
@@ -67,9 +66,6 @@ public partial class Downcast : BaseUnityPlugin
 
             //Your hooks go here
             DowncastHooks.Apply();
-
-            //Add options interface
-            MachineConnector.SetRegisteredOI(PLUGIN_GUID, Options);
         }
         catch (Exception ex)
         {

@@ -12,11 +12,9 @@ namespace Downcast
 {
     internal class DowncastHooks
     {
-        private static readonly DowncastOptions Options = DowncastOptions.instance;
-        //public static float DragCoefficient { get { return Options.dragCoefficient.Value / 1000f; } }
-
         public static void Apply()
         {
+            ////////////////////////////////////////// PLAYER CONSTRUCTOR HOOK ///////////////////////////////////////////
             On.Player.ctor += (orig, self, abstractCreature, world) =>
             {
                 orig(self, abstractCreature, world);
@@ -54,6 +52,7 @@ namespace Downcast
                 }
             };
 
+            /////////////////////////////////////////// UPDATE BODY MODE HOOK ////////////////////////////////////////////
             On.Player.UpdateBodyMode += (orig, self) =>
             {
                 if (Downcast.CanGlideFeature.TryGet(self, out bool canGlide) && canGlide)
@@ -89,8 +88,7 @@ namespace Downcast
                             Downcast.GlidingDir.Get(self).Value = Vector2.up;
                         }
                         Downcast.TargetGlidingDir.Get(self).Value = Downcast.GlidingDir.Get(self).Value;
-                    }
-                    else if (Downcast.Gliding.Get(self).Value && stopGliding)
+                    } else if (Downcast.Gliding.Get(self).Value && stopGliding)
                     {
                         Downcast.Gliding.Get(self).Value = false;
                         self.bodyMode = (self.bodyMode == DowncastEnums.PlayerBodyModeIndex.Gliding) ?
@@ -187,12 +185,14 @@ namespace Downcast
                 orig(self);
             };
 
+            ////////////////////////////////////// PHYSICAL OBJECT CONSTRUCTOR HOOK //////////////////////////////////////
             On.PhysicalObject.ctor += (orig, self, abstractPhysicalObject) =>
             {
                 orig(self, abstractPhysicalObject);
                 Downcast.NetForce.Get(null, self).Value = Vector2.zero;
             };
 
+            /////////////////////////////////////////// BODY CHUNK UPDATE HOOK ///////////////////////////////////////////
             On.BodyChunk.Update += (orig, self) =>
             {
                 if (float.IsNaN(self.vel.y))
@@ -212,19 +212,18 @@ namespace Downcast
                     self.vel.x = 0f;
                 }
 
-                ////////////////////////////////////////////// REPLACED SECTION //////////////////////////////////////////////
+                //////////////////////////////////////////// REPLACED SECTION ////////////////////////////////////////////
 
                 // Apply force of gravity, as well as net non-gravity forces.
                 self.vel += new Vector2(0, -self.owner.gravity) + Downcast.NetForce.Get(null, self.owner).Value;
 
-                //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                 bool flag;
                 if (ModManager.DLCShared)
                 {
                     flag = self.owner.room.PointSubmerged(new Vector2(self.pos.x, self.pos.y - self.rad));
-                }
-                else
+                } else
                 {
                     flag = (self.pos.y - self.rad <= self.owner.room.FloatWaterLevel(self.pos));
                 }
@@ -234,15 +233,13 @@ namespace Downcast
                     {
                         self.vel.y = self.vel.y * -0.5f;
                         self.vel.x = self.vel.x * 0.75f;
-                    }
-                    else
+                    } else
                     {
                         float effectiveRoomGravity = self.owner.EffectiveRoomGravity;
                         self.vel.y = self.vel.y + self.owner.buoyancy * effectiveRoomGravity * self.submersion;
                         self.vel *= Mathf.Lerp(self.owner.airFriction, Mathf.Lerp(self.owner.waterFriction * self.owner.waterRetardationImmunity, self.owner.waterFriction, Mathf.Pow(1f / Mathf.Max(1f, self.vel.magnitude - 10f), 0.5f)), self.submersion);
                     }
-                }
-                else
+                } else
                 {
                     self.vel *= self.owner.airFriction;
                 }
@@ -267,13 +264,11 @@ namespace Downcast
                 {
                     self.pos = self.setPos.Value;
                     self.setPos = null;
-                }
-                else if (self.terrainCurveNormal != default(Vector2))
+                } else if (self.terrainCurveNormal != default(Vector2))
                 {
                     self.pos.x = self.pos.x + Mathf.Abs(self.terrainCurveNormal.y) * self.vel.x;
                     self.pos.y = self.pos.y + self.vel.y;
-                }
-                else
+                } else
                 {
                     self.pos += self.vel;
                 }
@@ -289,8 +284,7 @@ namespace Downcast
                         self.checkAgainstSlopesVertically();
                     }
                     self.CheckHorizontalCollision();
-                }
-                else
+                } else
                 {
                     self.contactPoint.x = 0;
                     self.contactPoint.y = 0;
@@ -301,8 +295,7 @@ namespace Downcast
                     {
                         self.vel.x = 0f;
                         self.pos.x = -self.restrictInRoomRange;
-                    }
-                    else if (self.pos.x > self.owner.room.PixelWidth + self.restrictInRoomRange)
+                    } else if (self.pos.x > self.owner.room.PixelWidth + self.restrictInRoomRange)
                     {
                         self.vel.x = 0f;
                         self.pos.x = self.owner.room.PixelWidth + self.restrictInRoomRange;
@@ -311,8 +304,7 @@ namespace Downcast
                     {
                         self.vel.y = 0f;
                         self.pos.y = -self.restrictInRoomRange;
-                    }
-                    else if (self.pos.y > self.owner.room.PixelHeight + self.restrictInRoomRange)
+                    } else if (self.pos.y > self.owner.room.PixelHeight + self.restrictInRoomRange)
                     {
                         self.vel.y = 0f;
                         self.pos.y = self.owner.room.PixelHeight + self.restrictInRoomRange;
