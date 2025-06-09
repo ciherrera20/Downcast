@@ -14,8 +14,8 @@ def run_physics(initial_pos, initial_vel, num_steps, pitch_history=0):
     force_history = []
     g = 0.08
     drag_coef = 0.75
-    lift_coef = 0.1
-    air_friction = 0.01
+    lift_coef = 0.2
+    air_friction = 0.02
     pitch_history = np.ones(num_steps) * pitch_history
     glide_dir_history = np.array([np.cos(pitch_history), np.sin(pitch_history)]).T
 
@@ -40,7 +40,7 @@ def run_physics(initial_pos, initial_vel, num_steps, pitch_history=0):
         if vel[1] < 0:  # Player going down
             glide += -lift_coef * glide_dir[0] ** 2 * vel[1] * np.array([np.sign(glide_dir[0]), 1])
         if glide_dir[1] > 0:  # Player facing upward
-            glide += glide_dir[1] * vel[0] * np.array([-0.04, np.sign(vel[0]) * 0.14])
+            glide += glide_dir[1] * vel[0] * np.array([-1, np.sign(vel[0])]) * np.array([0.04, 0.14])
         friction = air_friction * -vel  # Apply drag in direction opposite velocity
         net_force = gravity + glide + friction
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     initial_pos = np.array([0.0, 0.0])
     initial_vel = np.array([0.0, 0.0])
     # pitch_history = np.array([-55 * np.pi / 180] * 50 + [30 * np.pi / 180] * 100)
-    pitch_history = np.array([-125 * np.pi / 180] * 50 + [150 * np.pi / 180] * 100)
+    pitch_history = np.array([0 * np.pi / 180] * 1000 + [45 * np.pi / 180] * 0)
     pos_history, vel_history, force_history = run_physics(initial_pos, initial_vel, len(pitch_history), pitch_history=pitch_history)
 
     fig, ((ax1, ax2), (ax3, ax4), (ax5, ax6)) = plt.subplots(3, 2)

@@ -25,22 +25,35 @@ namespace Downcast
             {
                 orig(self, abstractCreature, world);
 
+                // Add gliding variables if the CanGlide feature is present and set to true.
                 if (Downcast.CanGlideFeature.TryGet(self, out bool canGlide) && canGlide)
                 {
                     Downcast.Gliding.Get(self).Value = true;
                     Downcast.GlidingDir.Get(self).Value = Vector2.right;
                     Downcast.TargetGlidingDir.Get(self).Value = Vector2.right;
-                    if (!Downcast.TurningCoefficientFeature.TryGet(self, out Downcast.TurningCoefficient.Get(self).Value))
+                    if (!Downcast.GlidingTurnCoefFeature.TryGet(self, out Downcast.GlidingTurnCoef.Get(self).Value))
                     {
-                        Downcast.TurningCoefficient.Get(self).Value = 0.2f;
+                        Downcast.GlidingTurnCoef.Get(self).Value = 0.1f;
                     }
-                    if (!Downcast.DragCoefficientFeature.TryGet(self, out Downcast.DragCoefficient.Get(self).Value))
+                    if (!Downcast.GlidingDragCoefFeature.TryGet(self, out Downcast.GlidingDragCoef.Get(self).Value))
                     {
-                        Downcast.DragCoefficient.Get(self).Value = 0.03125f;
+                        Downcast.GlidingDragCoef.Get(self).Value = 0.75f;
                     }
-                    if (!Downcast.LiftCoefficientFeature.TryGet(self, out Downcast.LiftCoefficient.Get(self).Value))
+                    if (!Downcast.GlidingLiftCoefFeature.TryGet(self, out Downcast.GlidingLiftCoef.Get(self).Value))
                     {
-                        Downcast.LiftCoefficient.Get(self).Value = 0.03125f;
+                        Downcast.GlidingLiftCoef.Get(self).Value = 0.05f;
+                    }
+                    if (!Downcast.GlidingUpwardCoefXFeature.TryGet(self, out Downcast.GlidingUpwardCoefX.Get(self).Value))
+                    {
+                        Downcast.GlidingUpwardCoefX.Get(self).Value = 0.04f;
+                    }
+                    if (!Downcast.GlidingUpwardCoefYFeature.TryGet(self, out Downcast.GlidingUpwardCoefY.Get(self).Value))
+                    {
+                        Downcast.GlidingUpwardCoefY.Get(self).Value = 0.14f;
+                    }
+                    if (!Downcast.GlidingAirFrictionFeature.TryGet(self, out Downcast.GlidingAirFriction.Get(self).Value))
+                    {
+                        Downcast.GlidingAirFriction.Get(self).Value = 0.01f;
                     }
                 }
             };
@@ -56,7 +69,8 @@ namespace Downcast
                     bool bodyModeCanGlide = self.bodyMode == Player.BodyModeIndex.Default || self.bodyMode == DowncastEnums.PlayerBodyModeIndex.Gliding;
                     bool jumpPressed = self.input[0].jmp && !self.input[1].jmp;  // Jump was just pressed, but it is not being held
                     bool startGliding = inAir && bodyModeCanGlide && jumpPressed;  // Criteria to start gliding
-                    bool stopGliding = !inAir || !bodyModeCanGlide;  // Criteria to stop gliding
+                    //bool stopGliding = !inAir || !bodyModeCanGlide;  // Criteria to stop gliding
+                    bool stopGliding = !bodyModeCanGlide;  // Criteria to stop gliding
                     if (!Downcast.Gliding.Get(self).Value && startGliding)
                     {
                         Downcast.Gliding.Get(self).Value = true;
@@ -108,7 +122,7 @@ namespace Downcast
                             Downcast.TargetGlidingDir.Get(self).Value.Normalize();
                         }
                         float angleError = Vector2.SignedAngle(Downcast.TargetGlidingDir.Get(self).Value, Downcast.GlidingDir.Get(self).Value) * Mathf.PI / 180f;
-                        turningAngle = -angleError * Downcast.TurningCoefficient.Get(self).Value;
+                        turningAngle = -angleError * Downcast.GlidingTurnCoef.Get(self).Value;
                         Downcast.GlidingDir.Get(self).Value = new Vector2(
                             Mathf.Cos(turningAngle) * Downcast.GlidingDir.Get(self).Value.x - Mathf.Sin(turningAngle) * Downcast.GlidingDir.Get(self).Value.y,
                             Mathf.Sin(turningAngle) * Downcast.GlidingDir.Get(self).Value.x + Mathf.Cos(turningAngle) * Downcast.GlidingDir.Get(self).Value.y
@@ -116,9 +130,9 @@ namespace Downcast
 
                         Vector2 averageVel = (self.bodyChunks[0].vel + self.bodyChunks[1].vel) / 2;  // Average velocity of body chunks
                         Vector2 velDir = averageVel.normalized;  // Get unit vector pointing in direction of average velocity
-                        float dragCoef = Downcast.DragCoefficient.Get(self).Value;
-                        float liftCoef = Downcast.LiftCoefficient.Get(self).Value;
-                        float glidingAirFriction = 0.01f;
+                        float dragCoef = Downcast.GlidingDragCoef.Get(self).Value;
+                        float liftCoef = Downcast.GlidingLiftCoef.Get(self).Value;
+                        float glidingAirFriction = Downcast.GlidingAirFriction.Get(self).Value;
                         Vector2 glidingDir = Downcast.GlidingDir.Get(self).Value;
                         Vector2 dragForce = Vector2.up * glidingDir.x * glidingDir.x * self.customPlayerGravity * dragCoef;
                         Vector2 liftForce = Vector2.zero;
@@ -128,7 +142,7 @@ namespace Downcast
                         }
                         if (glidingDir.y > 0)
                         {
-                            liftForce += glidingDir.y * averageVel.x * new Vector2(-0.04f, Math.Sign(averageVel.x) * 0.14f);
+                            liftForce += glidingDir.y * averageVel.x * new Vector2(-Downcast.GlidingUpwardCoefX.Get(self).Value, Math.Sign(averageVel.x) * Downcast.GlidingUpwardCoefY.Get(self).Value);
                         }
                         Vector2 frictionForce = glidingAirFriction * -averageVel;
                         Downcast.NetForce.Get(null, self).Value = dragForce + liftForce + frictionForce;

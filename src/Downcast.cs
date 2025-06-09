@@ -26,17 +26,23 @@ public partial class Downcast : BaseUnityPlugin
 
     // Create slugbase player features
     public static readonly PlayerFeature<bool> CanGlideFeature = PlayerBool("downcast/can_glide");
-    public static readonly PlayerFeature<float> TurningCoefficientFeature = PlayerFloat("downcast/turning_coefficient");
-    public static readonly PlayerFeature<float> DragCoefficientFeature = PlayerFloat("downcast/drag_coefficient");
-    public static readonly PlayerFeature<float> LiftCoefficientFeature = PlayerFloat("downcast/lift_coefficient");
+    public static readonly PlayerFeature<float> GlidingTurnCoefFeature = PlayerFloat("downcast/gliding_turn_coef");
+    public static readonly PlayerFeature<float> GlidingDragCoefFeature = PlayerFloat("downcast/gliding_drag_coef");
+    public static readonly PlayerFeature<float> GlidingLiftCoefFeature = PlayerFloat("downcast/gliding_lift_coef");
+    public static readonly PlayerFeature<float> GlidingUpwardCoefXFeature = PlayerFloat("downcast/gliding_upward_coef_x");
+    public static readonly PlayerFeature<float> GlidingUpwardCoefYFeature = PlayerFloat("downcast/gliding_upward_coef_y");
+    public static readonly PlayerFeature<float> GlidingAirFrictionFeature = PlayerFloat("downcast/gliding_air_friction");
 
     // Create player instance data using slugbase
     public static readonly PlayerData<bool> Gliding = new PlayerData<bool>(CanGlideFeature);
     public static readonly PlayerData<Vector2> GlidingDir = new PlayerData<Vector2>(CanGlideFeature);
     public static readonly PlayerData<Vector2> TargetGlidingDir = new PlayerData<Vector2>(CanGlideFeature);
-    public static readonly PlayerData<float> TurningCoefficient = new PlayerData<float>(CanGlideFeature);
-    public static readonly PlayerData<float> DragCoefficient = new PlayerData<float>(CanGlideFeature);
-    public static readonly PlayerData<float> LiftCoefficient = new PlayerData<float>(CanGlideFeature);
+    public static readonly PlayerData<float> GlidingTurnCoef = new PlayerData<float>(CanGlideFeature);
+    public static readonly PlayerData<float> GlidingDragCoef = new PlayerData<float>(CanGlideFeature);
+    public static readonly PlayerData<float> GlidingLiftCoef = new PlayerData<float>(CanGlideFeature);
+    public static readonly PlayerData<float> GlidingUpwardCoefX = new PlayerData<float>(CanGlideFeature);
+    public static readonly PlayerData<float> GlidingUpwardCoefY = new PlayerData<float>(CanGlideFeature);
+    public static readonly PlayerData<float> GlidingAirFriction = new PlayerData<float>(CanGlideFeature);
 
     // Create physical object instance data using slugbase
     public static readonly Data<PhysicalObject, Vector2> NetForce = new Data<PhysicalObject, Vector2>(null);

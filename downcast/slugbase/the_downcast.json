@@ -4,10 +4,13 @@
     "description": "Just a downcast guy.<LINE>He can fly!<LINE>(sort of)",
     "features": {
         "color": "dea8ff",
-	"start_room": "UW_A12",
+	"start_room": "UW_S03",
         "downcast/can_glide": true,
-        "downcast/turning_coefficient": 0.1,
-        "downcast/drag_coefficient": 0.75,
-        "downcast/lift_coefficient": 0.1
+        "downcast/gliding_turn_coef": 0.1,
+        "downcast/gliding_drag_coef": 0.75,
+        "downcast/gliding_lift_coef": 0.2,
+        "downcast/gliding_air_friction": 0.02,
+        "downcast/gliding_upward_coef_x": 0.04,
+        "downcast/gliding_upward_coef_y": 0.14
     }
 }
