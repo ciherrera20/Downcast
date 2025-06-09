@@ -132,5 +132,8 @@ $RECYCLE.BIN/
 
 _NCrunch*
 
-# Visual Studio
+# =========================
+# Project specific files
+# =========================
 .vs/*
+downcast/**/*.dll

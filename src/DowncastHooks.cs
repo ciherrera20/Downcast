@@ -17,15 +17,11 @@ namespace Downcast
 
         public static void Apply()
         {
-            //// Save new slugcat state specific to the new gliding mechanic
-            //bool gliding = false;
-            //Vector2 glidingDir = Vector2.right;
-            //Vector2 targetGlidingDir = Vector2.right;
             On.Player.ctor += (orig, self, abstractCreature, world) =>
             {
                 orig(self, abstractCreature, world);
 
-                // Add gliding variables if the CanGlide feature is present and set to true.
+                // Add gliding variables if the can glide feature is present and set to true.
                 if (Downcast.CanGlideFeature.TryGet(self, out bool canGlide) && canGlide)
                 {
                     Downcast.Gliding.Get(self).Value = true;
@@ -41,7 +37,7 @@ namespace Downcast
                     }
                     if (!Downcast.GlidingLiftCoefFeature.TryGet(self, out Downcast.GlidingLiftCoef.Get(self).Value))
                     {
-                        Downcast.GlidingLiftCoef.Get(self).Value = 0.05f;
+                        Downcast.GlidingLiftCoef.Get(self).Value = 0.2f;
                     }
                     if (!Downcast.GlidingUpwardCoefXFeature.TryGet(self, out Downcast.GlidingUpwardCoefX.Get(self).Value))
                     {
@@ -53,7 +49,7 @@ namespace Downcast
                     }
                     if (!Downcast.GlidingAirFrictionFeature.TryGet(self, out Downcast.GlidingAirFriction.Get(self).Value))
                     {
-                        Downcast.GlidingAirFriction.Get(self).Value = 0.01f;
+                        Downcast.GlidingAirFriction.Get(self).Value = 0.02f;
                     }
                 }
             };
@@ -63,13 +59,15 @@ namespace Downcast
                 if (Downcast.CanGlideFeature.TryGet(self, out bool canGlide) && canGlide)
                 {
                     // Handle entering/exiting gliding mode
+                    bool lastLowerBodyInAir = self.bodyChunks[1].lastContactPoint.y == 0 && self.bodyChunks[1].lastContactPoint.x == 0;
+                    bool lastUpperBodyInAir = self.bodyChunks[0].lastContactPoint.y == 0 && self.bodyChunks[0].lastContactPoint.x == 0;
                     bool lowerBodyInAir = self.bodyChunks[1].ContactPoint.y == 0 && self.bodyChunks[1].ContactPoint.x == 0;
                     bool upperBodyInAir = self.bodyChunks[0].ContactPoint.y == 0 && self.bodyChunks[0].ContactPoint.x == 0;
-                    bool inAir = lowerBodyInAir && upperBodyInAir;
+                    bool notOverGround = !self.IsTileSolid(1, 0, -1) && !self.IsTileSolid(0, 0, -1);
+                    bool inAir = lowerBodyInAir && upperBodyInAir && lastLowerBodyInAir && lastUpperBodyInAir && notOverGround;
                     bool bodyModeCanGlide = self.bodyMode == Player.BodyModeIndex.Default || self.bodyMode == DowncastEnums.PlayerBodyModeIndex.Gliding;
                     bool jumpPressed = self.input[0].jmp && !self.input[1].jmp;  // Jump was just pressed, but it is not being held
                     bool startGliding = inAir && bodyModeCanGlide && jumpPressed;  // Criteria to start gliding
-                    //bool stopGliding = !inAir || !bodyModeCanGlide;  // Criteria to stop gliding
                     bool stopGliding = !bodyModeCanGlide;  // Criteria to stop gliding
                     if (!Downcast.Gliding.Get(self).Value && startGliding)
                     {
@@ -103,17 +101,29 @@ namespace Downcast
                         Downcast.NetForce.Get(null, self).Value = Vector2.zero;  // Reset slugcat's net non-gravity forces to 0
                     }
 
-                    // Handle setting forces on slugcat in gliding mode
+                    // Handle gliding mode
                     if (Downcast.Gliding.Get(self).Value)
                     {
+                        // Hard set some base game variables that interfere with gliding
                         self.bodyMode = DowncastEnums.PlayerBodyModeIndex.Gliding;
                         self.standing = false;
                         self.dynamicRunSpeed[0] = 0f;
                         self.dynamicRunSpeed[1] = 0f;
 
-                        // Set target gliding dir to direction held
+                        // Set target gliding dir and modify gliding dir
+                        bool directionHeld = self.input[0].y != 0 || self.input[0].x != 0;
+                        bool againstWall = self.bodyChunks[1].ContactPoint.x != 0 || self.bodyChunks[0].ContactPoint.x != 0;
                         float turningAngle = 0f;
-                        if (self.input[0].y != 0 || self.input[0].x != 0)
+                        if (againstWall)
+                        {
+                            if (self.bodyChunks[0].pos.y > self.bodyChunks[1].pos.y)
+                            {
+                                Downcast.TargetGlidingDir.Get(self).Value = Vector2.down;
+                            } else
+                            {
+                                Downcast.TargetGlidingDir.Get(self).Value = Vector2.up;
+                            }
+                        } else if (directionHeld)
                         {
                             Downcast.TargetGlidingDir.Get(self).Value = new Vector2(
                                 self.input[0].x,
@@ -128,6 +138,7 @@ namespace Downcast
                             Mathf.Sin(turningAngle) * Downcast.GlidingDir.Get(self).Value.x + Mathf.Cos(turningAngle) * Downcast.GlidingDir.Get(self).Value.y
                         );
 
+                        // Calculate gliding forces
                         Vector2 averageVel = (self.bodyChunks[0].vel + self.bodyChunks[1].vel) / 2;  // Average velocity of body chunks
                         Vector2 velDir = averageVel.normalized;  // Get unit vector pointing in direction of average velocity
                         float dragCoef = Downcast.GlidingDragCoef.Get(self).Value;
@@ -150,6 +161,27 @@ namespace Downcast
                         // Keep slugcat's body chunks aligned with gliding dir
                         self.bodyChunks[0].vel += Downcast.GlidingDir.Get(self).Value * 4f * self.EffectiveRoomGravity;
                         self.bodyChunks[1].vel -= Downcast.GlidingDir.Get(self).Value * 4f * self.EffectiveRoomGravity;
+
+                        // Handle transitioning from gliding to beams
+                        if (
+                            self.input[0].y > 0 &&
+                            (
+                                self.room.GetTile(self.mainBodyChunk.pos).verticalBeam ||
+                                self.room.GetTile(self.mainBodyChunk.pos).horizontalBeam
+                            )
+                        )
+                        {
+                            // Adapted from MovementUpdate
+                            self.bodyMode = Player.BodyModeIndex.ClimbingOnBeam;
+                            if (self.room.GetTile(self.mainBodyChunk.pos).verticalBeam)
+                            {
+                                self.room.PlaySound(SoundID.Slugcat_Grab_Beam, self.mainBodyChunk, false, 0.2f, 1f);
+                                self.animation = Player.AnimationIndex.ClimbOnBeam;
+                            } else
+                            {
+                                self.animation = Player.AnimationIndex.HangFromBeam;
+                            }
+                        }
                     }
                 }
                 orig(self);
