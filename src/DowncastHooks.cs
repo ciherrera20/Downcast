@@ -95,7 +95,6 @@ namespace Downcast
                                         Player.BodyModeIndex.Default :  // Set slugcat to default body mode if they are still in gliding mode
                                         self.bodyMode;  // Keep existing body mode if slugcat's body mode has changed
                         self.standing = self.bodyChunks[0].pos.y > self.bodyChunks[1].pos.y;  // Set slugcat standing if upper body is above lower body
-                        //self.gravity = self.customPlayerGravity;  // Reset slugcat's gravity to normal
                         Downcast.NetForce.Get(null, self).Value = Vector2.zero;  // Reset slugcat's net non-gravity forces to 0
                     }
 
@@ -143,7 +142,7 @@ namespace Downcast
                         float liftCoef = Downcast.GlidingLiftCoef.Get(self).Value;
                         float glidingAirFriction = Downcast.GlidingAirFriction.Get(self).Value;
                         Vector2 glidingDir = Downcast.GlidingDir.Get(self).Value;
-                        Vector2 dragForce = Vector2.up * glidingDir.x * glidingDir.x * self.customPlayerGravity * dragCoef;
+                        Vector2 dragForce = Vector2.up * glidingDir.x * glidingDir.x * self.gravity * dragCoef;
                         Vector2 liftForce = Vector2.zero;
                         if (averageVel.y < 0)
                         {
