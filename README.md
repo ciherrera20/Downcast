@@ -4,7 +4,8 @@ TODO:
 - Bugs:
     - Can wall jump while gliding off of a corner, leading to some wacky looking movement
 - Add flapping behaviors
-    - When gliding, pressing jump allows slugcat to flap their arms and gain some height, at the cost of reducing horizontal momentum
+    - [DONE] When gliding, pressing jump allows slugcat to flap their arms and gain some height, at the cost of reducing horizontal momentum
+    - Figure out how to add custom sound effects and decide whether to add a custom flapping sound
 - Think about how grapple worms should interact with gliding/flapping
 - Test gliding in zero g.
     - Initial test: seems to just not do anything in zero g

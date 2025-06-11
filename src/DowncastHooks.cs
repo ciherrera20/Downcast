@@ -133,6 +133,10 @@ namespace Downcast
                         if (Downcast.GlidingWantToFlap.Get(self).Value > 0 && Downcast.GlidingFlapFrames.Get(self).Value == 0)
                         {
                             Downcast.GlidingFlapFrames.Get(self).Value = Downcast.GlidingFlapCooldown.Get(self).Value;
+                            self.room.PlaySound(SoundID.Slugcat_Super_Jump, self.mainBodyChunk, false, 1f, 1f);
+                        } else if (Downcast.GlidingFlapFrames.Get(self).Value == Downcast.GlidingFlapCooldown.Get(self).Value / 2)
+                        {
+                            self.room.PlaySound(SoundID.Slugcat_Flip_Jump, self.mainBodyChunk, false, 1f, 1f);
                         }
 
                         // Set target gliding dir and modify gliding dir
@@ -172,7 +176,7 @@ namespace Downcast
                         Vector2 glidingDir = Downcast.GlidingDir.Get(self).Value;
                         Vector2 dragForce = Vector2.zero;
                         Vector2 liftForce = Vector2.zero;
-                        if (Downcast.GlidingFlapFrames.Get(self).Value == 0 || ((float)Downcast.GlidingFlapFrames.Get(self).Value / (float)Downcast.GlidingFlapCooldown.Get(self).Value) >= 0.5)
+                        if (Downcast.GlidingFlapFrames.Get(self).Value == 0 || Downcast.GlidingFlapFrames.Get(self).Value >= Downcast.GlidingFlapCooldown.Get(self).Value / 2)
                         {
                             dragForce = Vector2.up * glidingDir.x * glidingDir.x * self.gravity * dragCoef;
                         }
