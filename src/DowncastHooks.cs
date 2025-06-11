@@ -49,6 +49,20 @@ namespace Downcast
                     {
                         Downcast.GlidingAirFriction.Get(self).Value = 0.02f;
                     }
+                    if (!Downcast.GlidingFlapForceFeature.TryGet(self, out Downcast.GlidingFlapForce.Get(self).Value))
+                    {
+                        Downcast.GlidingFlapForce.Get(self).Value = 0.9f;
+                    }
+                    if (!Downcast.GlidingFlapCooldownFeature.TryGet(self, out Downcast.GlidingFlapCooldown.Get(self).Value))
+                    {
+                        Downcast.GlidingFlapCooldown.Get(self).Value = 20;
+                    }
+                    Downcast.GlidingFlapFrames.Get(self).Value = 0;
+                    Downcast.GlidingWantToFlap.Get(self).Value = 0;
+                    if (!Downcast.GlidingFlapBufferFeature.TryGet(self, out Downcast.GlidingFlapBuffer.Get(self).Value))
+                    {
+                        Downcast.GlidingFlapBuffer.Get(self).Value = 5;
+                    }
                 }
             };
 
@@ -88,6 +102,8 @@ namespace Downcast
                             Downcast.GlidingDir.Get(self).Value = Vector2.up;
                         }
                         Downcast.TargetGlidingDir.Get(self).Value = Downcast.GlidingDir.Get(self).Value;
+                        Downcast.GlidingFlapFrames.Get(self).Value = 10;
+                        Downcast.GlidingWantToFlap.Get(self).Value = 0;
                     } else if (Downcast.Gliding.Get(self).Value && stopGliding)
                     {
                         Downcast.Gliding.Get(self).Value = false;
@@ -96,6 +112,8 @@ namespace Downcast
                                         self.bodyMode;  // Keep existing body mode if slugcat's body mode has changed
                         self.standing = self.bodyChunks[0].pos.y > self.bodyChunks[1].pos.y;  // Set slugcat standing if upper body is above lower body
                         Downcast.NetForce.Get(null, self).Value = Vector2.zero;  // Reset slugcat's net non-gravity forces to 0
+                        Downcast.GlidingFlapFrames.Get(self).Value = 0;
+                        Downcast.GlidingWantToFlap.Get(self).Value = 0;
                     }
 
                     // Handle gliding mode
@@ -106,6 +124,16 @@ namespace Downcast
                         self.standing = false;
                         self.dynamicRunSpeed[0] = 0f;
                         self.dynamicRunSpeed[1] = 0f;
+
+                        // Handle flapping
+                        if (self.input[0].jmp && !self.input[1].jmp)
+                        {
+                            Downcast.GlidingWantToFlap.Get(self).Value = Downcast.GlidingFlapBuffer.Get(self).Value;
+                        }
+                        if (Downcast.GlidingWantToFlap.Get(self).Value > 0 && Downcast.GlidingFlapFrames.Get(self).Value == 0)
+                        {
+                            Downcast.GlidingFlapFrames.Get(self).Value = Downcast.GlidingFlapCooldown.Get(self).Value;
+                        }
 
                         // Set target gliding dir and modify gliding dir
                         bool directionHeld = self.input[0].y != 0 || self.input[0].x != 0;
@@ -142,8 +170,12 @@ namespace Downcast
                         float liftCoef = Downcast.GlidingLiftCoef.Get(self).Value;
                         float glidingAirFriction = Downcast.GlidingAirFriction.Get(self).Value;
                         Vector2 glidingDir = Downcast.GlidingDir.Get(self).Value;
-                        Vector2 dragForce = Vector2.up * glidingDir.x * glidingDir.x * self.gravity * dragCoef;
+                        Vector2 dragForce = Vector2.zero;
                         Vector2 liftForce = Vector2.zero;
+                        if (Downcast.GlidingFlapFrames.Get(self).Value == 0 || ((float)Downcast.GlidingFlapFrames.Get(self).Value / (float)Downcast.GlidingFlapCooldown.Get(self).Value) >= 0.5)
+                        {
+                            dragForce = Vector2.up * glidingDir.x * glidingDir.x * self.gravity * dragCoef;
+                        }
                         if (averageVel.y < 0)
                         {
                             liftForce += -liftCoef * glidingDir.x * glidingDir.x * averageVel.y * new Vector2(Math.Sign(glidingDir.x), 1f);
@@ -153,11 +185,16 @@ namespace Downcast
                             liftForce += glidingDir.y * averageVel.x * new Vector2(-Downcast.GlidingUpwardCoefX.Get(self).Value, Math.Sign(averageVel.x) * Downcast.GlidingUpwardCoefY.Get(self).Value);
                         }
                         Vector2 frictionForce = glidingAirFriction * -averageVel;
-                        Downcast.NetForce.Get(null, self).Value = dragForce + liftForce + frictionForce;
+
+                        // Calculate flapping force
+                        Vector2 flapForce = Vector2.up * Downcast.GlidingFlapForce.Get(self).Value * ((float)Downcast.GlidingFlapFrames.Get(self).Value / (float)Downcast.GlidingFlapCooldown.Get(self).Value);
+
+                        // Sum forces
+                        Downcast.NetForce.Get(null, self).Value = dragForce + liftForce + frictionForce + flapForce;
 
                         // Keep slugcat's body chunks aligned with gliding dir
-                        self.bodyChunks[0].vel += Downcast.GlidingDir.Get(self).Value * 4f * self.EffectiveRoomGravity;
-                        self.bodyChunks[1].vel -= Downcast.GlidingDir.Get(self).Value * 4f * self.EffectiveRoomGravity;
+                        self.bodyChunks[0].vel += glidingDir * 4f * self.EffectiveRoomGravity;
+                        self.bodyChunks[1].vel -= glidingDir * 4f * self.EffectiveRoomGravity;
 
                         // Handle transitioning from gliding to beams
                         if (
@@ -178,6 +215,16 @@ namespace Downcast
                             {
                                 self.animation = Player.AnimationIndex.HangFromBeam;
                             }
+                        }
+
+                        // Decrement frame counters for flapping
+                        if (Downcast.GlidingFlapFrames.Get(self).Value > 0)
+                        {
+                            Downcast.GlidingFlapFrames.Get(self).Value--;
+                        }
+                        if (Downcast.GlidingWantToFlap.Get(self).Value > 0)
+                        {
+                            Downcast.GlidingWantToFlap.Get(self).Value--;
                         }
                     }
                 }

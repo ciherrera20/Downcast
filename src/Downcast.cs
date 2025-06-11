@@ -31,6 +31,9 @@ public partial class Downcast : BaseUnityPlugin
     public static readonly PlayerFeature<float> GlidingUpwardCoefXFeature = PlayerFloat("downcast/gliding_upward_coef_x");
     public static readonly PlayerFeature<float> GlidingUpwardCoefYFeature = PlayerFloat("downcast/gliding_upward_coef_y");
     public static readonly PlayerFeature<float> GlidingAirFrictionFeature = PlayerFloat("downcast/gliding_air_friction");
+    public static readonly PlayerFeature<float> GlidingFlapForceFeature = PlayerFloat("downcast/gliding_flap_force");
+    public static readonly PlayerFeature<int> GlidingFlapCooldownFeature = PlayerInt("downcast/gliding_flap_cooldown");
+    public static readonly PlayerFeature<int> GlidingFlapBufferFeature = PlayerInt("downcast/gliding_flap_buffer");
 
     // Create player instance data using slugbase
     public static readonly PlayerData<bool> Gliding = new PlayerData<bool>(CanGlideFeature);
@@ -42,6 +45,11 @@ public partial class Downcast : BaseUnityPlugin
     public static readonly PlayerData<float> GlidingUpwardCoefX = new PlayerData<float>(CanGlideFeature);
     public static readonly PlayerData<float> GlidingUpwardCoefY = new PlayerData<float>(CanGlideFeature);
     public static readonly PlayerData<float> GlidingAirFriction = new PlayerData<float>(CanGlideFeature);
+    public static readonly PlayerData<float> GlidingFlapForce = new PlayerData<float>(CanGlideFeature);
+    public static readonly PlayerData<int> GlidingFlapCooldown = new PlayerData<int>(CanGlideFeature);
+    public static readonly PlayerData<int> GlidingFlapFrames = new PlayerData<int>(CanGlideFeature);
+    public static readonly PlayerData<int> GlidingWantToFlap = new PlayerData<int>(CanGlideFeature);
+    public static readonly PlayerData<int> GlidingFlapBuffer = new PlayerData<int>(CanGlideFeature);
 
     // Create physical object instance data using slugbase
     public static readonly Data<PhysicalObject, Vector2> NetForce = new Data<PhysicalObject, Vector2>(null);

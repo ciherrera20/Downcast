@@ -11,6 +11,9 @@
         "downcast/gliding_lift_coef": 0.2,
         "downcast/gliding_air_friction": 0.02,
         "downcast/gliding_upward_coef_x": 0.04,
-        "downcast/gliding_upward_coef_y": 0.14
+        "downcast/gliding_upward_coef_y": 0.14,
+        "downcast/gliding_flap_force": 1,
+        "downcast/gliding_flap_cooldown": 20,
+        "downcast/gliding_flap_buffer": 5
     }
 }
